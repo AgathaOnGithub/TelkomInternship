@@ -15,7 +15,10 @@ class UserController extends Controller
         $user = Auth::user();
         $upload = Upload::where('user_id', $user->id)->first();
 
-        return view('dashboard.user', compact('user', 'upload'));
+        // Ambil semua task yang sudah diassign ke user
+        $tasks = $user->tasks()->withPivot('status')->get();
+
+        return view('dashboard.user', compact('user', 'upload', 'tasks'));
     }
 
     public function profile($id)
@@ -67,5 +70,63 @@ class UserController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Dokumen berhasil diupload.');
+    }
+
+    public function showProfile($id)
+    {
+        $user = User::findOrFail($id); // ambil data user sesuai ID
+        $registration = InternshipRegistration::where('user_id', $user->id)->first();
+        return view('profile.show', compact('user'));
+    }
+
+    public function index()
+    {
+        $users = User::all();  // Atau bisa dengan pagination, seperti User::paginate(10)
+        
+        return view('admin.users.index', compact('users'));
+    }
+
+    public function show($id)
+    {
+        $user = User::findOrFail($id);
+        return view('profile.show', compact('user'));
+    }
+
+    public function destroy($id)
+    {
+        // Optional: cek jika yang login bukan admin
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Anda tidak memiliki izin untuk menghapus user.');
+        }
+
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return redirect()->back()->with('success', 'Data user berhasil dihapus');
+    }
+
+    public function edit($id)
+    {
+        $user = User::findOrFail($id);
+        return view('admin.user_edit', compact('user'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $mentor = User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $mentor->id,
+            'phone' => 'required|string|max:15',
+            'institution' => 'nullable|string|max:255',
+            'major' => 'nullable|string|max:255',
+            'nik' => 'nullable|string|max:20',
+            'role' => 'required|string'
+        ]);
+
+        $mentor->update($request->only(['name', 'email', 'phone', 'institution', 'major', 'nik']));
+
+        return redirect()->route('admin.dashboard')->with('success', 'Data pembimbing berhasil diperbarui.');
     }
 }
