@@ -10,11 +10,18 @@ class Task extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'description', 'file_path', 'user_id', 'deadline', 'status', 'grade'];
+    protected $fillable = ['title', 'description', 'file_path', 'user_id', 'deadline', 'status', 'grade', 'internship_id'];
 
     // Relasi ke user
-    public function user()
+    // App\Models\Task
+    public function users()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsToMany(User::class, 'task_user', 'task_id', 'user_id')->withPivot('file_path', 'status', 'grade')->withTimestamps();
     }
+
+    public function internship()
+    {
+        return $this->belongsTo(Internship::class);
+    }
+
 }
