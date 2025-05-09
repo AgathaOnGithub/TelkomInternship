@@ -11,10 +11,11 @@
         <table class="w-full text-sm text-left border border-gray-300 shadow-md rounded-lg">
             <thead class="bg-blue-500 text-white">
                 <tr>
-                    <th class="px-4 py-2">Nama</th>
                     <th class="px-4 py-2">Judul Task</th>
+                    <th class="px-4 py-2">Deskripsi</th>
                     <th class="px-4 py-2 text-center">File</th>
                     <th class="px-4 py-2 text-center">Status</th>
+                    <th class="px-4 py-2 text-center">Deadline</th> <!-- Tambahan -->
                     <th class="px-4 py-2 text-center">Nilai</th>
                 </tr>
             </thead>
@@ -22,22 +23,22 @@
                 @if(isset($tasks) && $tasks->count() > 0)
                     @foreach($tasks as $task)
                         <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                            <td class="px-4 py-2">
-                                {{ $task->user->name ?? 'Tidak Ada User' }}
-                            </td>
-                            <td class="px-4 py-2">
-                                {{ $task->title }}
-                            </td>
+                            <td class="px-4 py-2">{{ $task->title }}</td>
+                            <td class="px-4 py-2">{{ $task->description }}</td>
                             <td class="px-4 py-2 text-center">
-                                @if(Auth::user()->role == 'user' && $task->user_id == Auth::id())
+                                @php
+                                    $pivot = $task->users->firstWhere('id', Auth::id())?->pivot;
+                                @endphp
+
+                                @if(Auth::user()->role == 'user' && $pivot)
                                     <a href="{{ route('tasks.upload', $task) }}" 
                                         class="bg-blue-500 text-white px-2 py-1 rounded">
-                                        {{ $task->file ? 'Ganti File' : 'Upload File' }}
+                                        {{ $pivot->file_path ? 'Ganti File' : 'Upload File' }}
                                     </a>
-                                    @if ($task->file_path)
-                                        <a href="{{ asset('storage/' . $task->file_path) }}" 
-                                        class="text-blue-600 underline ml-2" target="_blank">
-                                        Lihat File
+                                    @if ($pivot->file_path)
+                                        <a href="{{ asset('storage/' . $pivot->file_path) }}" 
+                                            class="text-blue-600 underline ml-2" target="_blank">
+                                            Lihat File
                                         </a>
                                     @endif
                                 @else
@@ -46,8 +47,19 @@
                             </td>
                             <td class="px-4 py-2 text-center">
                                 <span class="px-3 py-1 rounded-full text-xs font-medium
-                                    {{ $task->status == 'Completed' ? 'bg-green-500 text-white' : 'bg-yellow-400 text-gray-800' }}">
-                                    {{ ucfirst($task->status) }}
+                                    {{ $pivot->status === 'completed' ? 'bg-green-500 text-white' : 'bg-yellow-400 text-gray-800' }}">
+                                    {{ ucfirst($pivot->status) }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-center">
+                                @php
+                                    $deadline = \Carbon\Carbon::parse($task->deadline);
+                                    $now = \Carbon\Carbon::now();
+                                    $isLate = $now->gt($deadline);
+                                @endphp
+                                <span class="px-3 py-1 text-xs font-medium rounded-full 
+                                    {{ $isLate ? 'bg-red-500 text-white' : 'bg-blue-500 text-white' }}">
+                                    {{ $deadline->format('d M Y') }}
                                 </span>
                             </td>
                             <td class="px-4 py-2 text-center">
@@ -61,7 +73,7 @@
                     @endforeach
                 @else
                     <tr>
-                        <td colspan="5" class="text-center text-gray-500 py-4">
+                        <td colspan="6" class="text-center text-gray-500 py-4">
                             Tidak ada tugas yang tersedia.
                         </td>
                     </tr>
