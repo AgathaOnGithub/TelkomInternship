@@ -83,179 +83,86 @@
         </table>
     </div>
 
-    <!-- Daftar Tugas Magang -->
-    <div class="bg-white shadow rounded-lg p-6 mb-10">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold text-gray-800">Daftar Tugas Magang</h2>
-            <a href="{{ route('tasks.create') }}"
-            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                ➕ Tambah Tugas
-            </a>
-        </div>
-
-        <table class="w-full border border-gray-300 text-center">
+    <!-- Daftar Tasks -->
+    <h2 class="text-blue-600 font-bold text-2xl text-center mt-6">Daftar Tugas Peserta Magang</h2>
+    <div class="flex justify-end mb-4">
+        <a href="{{ route('tasks.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Tambah Task</a>
+    </div>
+    <div class="bg-white shadow-md rounded-lg mt-4 p-4">
+        <table class="w-full border border-gray-300 rounded-lg">
             <thead class="bg-blue-600 text-white">
                 <tr>
-                    <th class="px-4 py-2 border">Program Magang</th>
-                    <th class="px-4 py-2 border">Jumlah Peserta</th>
+                    <th class="px-4 py-2 border">Nama</th>
+                    <th class="px-4 py-2 border">Judul Task</th>
+                    <th class="px-4 py-2 border">File</th>
+                    <th class="px-4 py-2 border">Status</th>
+                    <th class="px-4 py-2 border">Nilai</th>
                     <th class="px-4 py-2 border">Aksi</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($internships as $internship)
-                    <tr class="bg-gray-100">
-                        <td class="px-4 py-2 border">{{ $internship->name }}</td>
-                        <td class="px-4 py-2 border">{{ $internship->users->count() }}</td>
+                @foreach ($tasks as $task)
+                    <tr class="text-center bg-gray-100">
+                        <td class="px-4 py-2 border">{{ $task->user->name }}</td>
+                        <td class="px-4 py-2 border">{{ $task->title }}</td>
                         <td class="px-4 py-2 border">
-                            <button onclick="toggleDetail({{ $internship->id }})"
-                                    class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-                                🔍 Lihat
+                            @if ($task->file_path)
+                                <span class="text-sm text-green-600 block">📁 {{ \Carbon\Carbon::parse($task->updated_at)->format('d M Y') }}</span>
+                                <button onclick="previewPdf('{{ asset('storage/' . $task->file_path) }}')" class="bg-blue-500 text-white px-2 py-1 rounded">Lihat File</button>
+                            @else
+                                <span class="text-gray-500">Belum diupload</span>
+                            @endif
                         </td>
-                    </tr>
-
-                <!-- Detail Peserta -->
-                <tr id="detail-{{ $internship->id }}" class="hidden">
-                    <td colspan="3" class="p-4">
-                        <div class="bg-gray-50 p-4 rounded shadow-inner">
-                            <h3 class="text-lg font-semibold mb-3">Peserta Program: {{ $internship->name }}</h3>
-                            <table class="w-full border text-sm">
-                                <thead class="bg-gray-200">
-                                    <tr>
-                                        <th class="px-3 py-1 border">Nama Peserta</th>
-                                        <th class="px-3 py-1 border">Judul Tugas</th>
-                                        <th class="px-3 py-1 border">File</th>
-                                        <th class="px-3 py-1 border">Deadline</th>
-                                        <th class="px-3 py-1 border">Nilai</th>
-                                        <th class="px-3 py-1 border">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php $adaPeserta = false; @endphp
-                                    @forelse ($internship->users as $user)
-                                        @if (strcasecmp($user->pivot->status_lowongan, 'diterima') === 0)
-                                            @php $adaPeserta = true; @endphp
-                                            @forelse ($user->tasks as $task)
-                                                <tr>
-                                                    <td class="px-3 py-1 border">{{ $user->name }}</td>
-                                                    <td class="px-3 py-1 border">{{ $task->title }}</td>
-                                                    <td class="px-3 py-1 border">
-                                                    @if ($task->pivot && $task->pivot->file_path)
-                                                        <a href="{{ asset('storage/' . $task->pivot->file_path) }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">📁 File</a>
-                                                    @else
-                                                        <span class="text-gray-500">Belum ada</span>
-                                                    @endif
-                                                    </td>
-                                                    <td class="px-3 py-1 border">
-                                                        {{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d M Y') : '-' }}
-                                                    </td>
-                                                    <td class="px-3 py-1 border">
-                                                        {{ $task->grade ?? 'Belum Dinilai' }}
-                                                    </td>
-                                                    <td class="px-3 py-1 border flex gap-2">
-                                                    <a href="{{ route('tasks.edit', $task->id) }}"
-                                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm">
-                                                        Edit
-                                                    </a>
-                                                    <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Yakin?')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit"
-                                                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                                                            Hapus
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td class="px-3 py-1 border" colspan="5" class="text-center text-gray-500 italic">
-                                                        Belum ada tugas
-                                                    </td>
-                                                </tr>
-                                            @endforelse
-                                        @endif
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center text-gray-500 italic">Belum ada peserta</td>
-                                        </tr>
-                                    @endforelse
-
-                                    @if (!$adaPeserta)
-                                        <tr>
-                                            <td colspan="5" class="text-center text-gray-500 italic">Belum ada peserta yang diterima</td>
-                                        </tr>
-                                    @endif
-                                </tbody>
-                            </table>
+                        <td class="px-4 py-2 border">{{ ucfirst($task->status) }}</td>
+                        <td class="px-4 py-2 border">
+                            @if (empty($task->grade))
+                                <form action="{{ route('tasks.grade', $task->id) }}" method="POST">
+                                    @csrf
+                                    <input type="number" name="grade" class="border px-2 py-1 rounded" min="0" max="100" required>
+                                    <button type="submit" class="bg-green-500 text-white px-2 py-1 rounded">Input Nilai</button>
+                                </form>
+                            @else
+                                {{ ucfirst($task->grade) }}
+                            @endif
+                        </td>
+                        <td class="px-4 py-2 border">
+                        <div class="flex justify-center gap-2">
+                            <a href="{{ route('tasks.edit', $task->id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded text-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus tugas ini?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded text-sm">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </form>
                         </div>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-</div>
-
-<script>
-    function toggleDetail(id) {
-        const row = document.getElementById(`detail-${id}`);
-        row.classList.toggle('hidden');
-    }
-</script>
-
-<!-- Modal Preview PDF -->
-<div class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 items-center justify-center z-50" id="pdfModal">
-    <div class="bg-white shadow-lg rounded-lg w-4/5 h-4/5 relative">
-        <button class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded" onclick="closeModal()">✖</button>
-        <iframe id="pdfViewer" src="" class="w-full h-full rounded-b-lg"></iframe>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Modal untuk Preview PDF -->
+<div class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 items-center justify-center" id="pdfModal">
+    <div class="bg-white shadow-lg rounded-lg w-4/5 h-4/5 relative">
+        <button class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg" onclick="closeModal()">✖</button>
+        <iframe id="pdfViewer" src="" class="w-full h-full"></iframe>
+    </div>
+</div>
+
+<!-- Script untuk Preview PDF -->
 <script>
     function previewPdf(url) {
         document.getElementById('pdfViewer').src = url;
         document.getElementById('pdfModal').classList.remove('hidden');
         document.getElementById('pdfModal').classList.add('flex');
     }
-
     function closeModal() {
         document.getElementById('pdfModal').classList.add('hidden');
         document.getElementById('pdfModal').classList.remove('flex');
-    }
-
-    function submitStatus(selectObj, userId) {
-        let status = selectObj.value;
-
-        $.ajax({
-            url: '{{ route('update.status.lowongan') }}',
-            method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                user_id: userId,
-                status_lowongan: status
-            },
-            success: function(response) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Status Diperbarui!',
-                    text: `Status peserta telah diubah menjadi "${status}".`,
-                    timer: 2500,
-                    showConfirmButton: false
-                });
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: 'Terjadi kesalahan saat mengubah status.',
-                    timer: 2500,
-                    showConfirmButton: false
-                });
-            }
-        });
     }
 </script>
 @endsection
