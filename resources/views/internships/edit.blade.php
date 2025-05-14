@@ -15,7 +15,7 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.internships.update', $internship->id) }}" method="POST">
+        <form action="{{ url('/admin/internships/' . $internship->id) }}" method="POST">
             @csrf
             @method('PUT')
 
@@ -37,14 +37,18 @@
                        value="{{ old('location', $internship->location) }}" required>
             </div>
 
+            <!-- Ganti name menjadi 'requirements' -->
             <div class="mb-4">
-                <label class="block font-semibold text-gray-700">Persyaratan</label>
-                <textarea name="requirements" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Masukkan persyaratan" required></textarea>
+                <label for="requirements" class="block font-semibold">Persyaratan</label>
+                <textarea name="requirements" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-red-400"
+                          rows="3" required>{{ old('requirements', $internship->requirements) }}</textarea>
             </div>
 
+            <!-- Ganti name menjadi 'qualifications' -->
             <div class="mb-4">
-                <label class="block font-semibold text-gray-700">Kualifikasi</label>
-                <textarea name="qualification" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Masukkan kualifikasi" required></textarea>
+                <label for="qualifications" class="block font-semibold">Kualifikasi</label>
+                <textarea name="qualifications" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-red-400"
+                          rows="3" required>{{ old('qualifications', $internship->qualifications) }}</textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-4">

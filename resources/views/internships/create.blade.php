@@ -48,6 +48,13 @@
                 <textarea name="qualifications" class="w-full px-4 py-2 border rounded-lg" rows="3" placeholder="Masukkan kualifikasi" required></textarea>
             </div>
 
+            <!-- Kuota -->
+            <div class="mb-4">
+                <label class="block font-semibold text-gray-700">Kuota</label>
+                <input type="number" name="quota" class="w-full px-4 py-2 border rounded-lg" placeholder="Masukkan kuota" required>
+            </div>
+
+
             <!-- Tanggal Mulai dan Selesai -->
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>

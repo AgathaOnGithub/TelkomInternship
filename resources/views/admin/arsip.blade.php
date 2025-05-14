@@ -51,7 +51,7 @@
                                 @if ($item->rekap_nilai)
                                 <a href="{{ asset(str_replace('public/', 'storage/', $item->rekap_nilai)) }}" target="_blank"
                                     class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition">
-                                    Lihat 
+                                    Lihat Transkrip
                                 </a>
                                 @else
                                     <span class="text-gray-400 italic">Kosong</span>

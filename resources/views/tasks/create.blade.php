@@ -1,74 +1,46 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-3xl mx-auto mt-10 mb-10 p-6 bg-white shadow-lg rounded-lg">
-    <h2 class="text-center text-2xl font-bold text-blue-600 mb-4">
-        <i class="fas fa-tasks"></i> Tambah Tugas
-    </h2>
+<div class="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-lg">
+    <h2 class="text-2xl font-bold mb-6">Buat Tugas Baru</h2>
 
-    @if(session('success'))
-        <div class="bg-green-100 text-green-700 p-3 rounded mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form action="{{ route('tasks.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <form action="{{ route('tasks.assign') }}" method="POST">
         @csrf
-        
-        <div>
-            <label for="title" class="block font-semibold">Judul Tugas</label>
-            <input type="text" id="title" name="title" class="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-blue-300" required placeholder="Masukkan judul tugas">
+
+        <div class="mb-4">
+            <label for="title" class="block text-sm font-medium text-gray-700">Judul Tugas</label>
+            <input type="text" name="title" id="title" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
         </div>
 
-        <div>
-            <label for="description" class="block font-semibold">Deskripsi</label>
-            <textarea id="description" name="description" rows="3" class="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-blue-300" required placeholder="Deskripsi tugas"></textarea>
+        <div class="mb-4">
+            <label for="description" class="block text-sm font-medium text-gray-700">Deskripsi</label>
+            <textarea name="description" id="description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required></textarea>
         </div>
 
-        <div>
-            <label for="deadline" class="block font-semibold">Batas Waktu</label>
-            <input type="date" id="deadline" name="deadline" class="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-blue-300" required>
-        </div>
-
-        <div>
-            <label for="status" class="block font-semibold">Status</label>
-            <select id="status" name="status" class="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-blue-300">
-                <option value="pending">Pending</option>
-                <option value="in_progress">Sedang Dikerjakan</option>
-                <option value="completed">Selesai</option>
-            </select>
-        </div>
-
-        <div>
-            <label for="user_id" class="block font-semibold">Pilih Peserta Magang</label>
-            <select id="user_id" name="user_id" class="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-blue-300" required>
-                <option value="">-- Pilih Peserta --</option>
-                @foreach($users as $user)
-                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+        <div class="mb-4">
+            <label for="internship_id" class="block text-sm font-medium text-gray-700">Program Magang</label>
+            <select name="internship_id" id="internship_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                @foreach ($internships as $internship)
+                    <option value="{{ $internship->id }}">{{ $internship->name }}</option>
                 @endforeach
             </select>
         </div>
 
-        <div>
-            <label for="file" class="block font-semibold">Unggah File (PDF, DOCX, JPG, PNG)</label>
-            <input type="file" id="file" name="file" accept=".pdf,.docx,.jpg,.png" class="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-blue-300" required>
+        <div class="mb-4">
+            <label for="deadline" class="block text-sm font-medium text-gray-700">Deadline</label>
+            <input type="date" name="deadline" id="deadline" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
         </div>
 
-        <div class="text-center">
-            <button type="submit" class="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition">
-                <i class="fas fa-save"></i> Simpan
-            </button>
-        </div>
+        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">Buat Tugas</button>
+        @if ($errors->any())
+            <div class="mb-4 p-4 bg-red-100 text-red-600 rounded">
+                <ul class="list-disc pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
     </form>
 </div>
 @endsection

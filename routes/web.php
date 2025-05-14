@@ -12,16 +12,36 @@ use App\Http\Controllers\InternshipController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\ArsipController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 
-// 🏠 Halaman Utama
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
+
+// Route untuk verifikasi email
+Route::get('/email/verify', function () {
+    return view('auth.verify');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+    return redirect('/dashboard'); // ubah kalau mau redirect ke halaman lain
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+
+    return back()->with('status', 'verification-link-sent');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
+// **🏠 Halaman Utama**
 Route::get('/', function () {
     return Auth::check() ? redirect()->route('dashboard') : view('home');
 })->name('home');
 
-// 🔒 Routes untuk tamu (Guest)
+// **🔒 Routes untuk tamu (Guest)**
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
@@ -30,32 +50,54 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 });
 
-// 🔓 Logout (Hanya untuk User yang sudah login)
+Route::get('/profile', [AuthController::class, 'profile'])
+    ->name('profile.show')
+    ->middleware('auth');
+
+// **🔓 Logout (Hanya untuk User yang sudah login)**
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-// 📌 Informasi Umum
+// **📌 Informasi Umum**
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 
-// 📢 Program Magang (Dapat diakses tanpa login)
+// **📢 Program Magang (Dapat diakses tanpa login)**
 Route::get('/internships', [InternshipController::class, 'index'])->name('internships.index');
 Route::get('/internships/{id}', [InternshipController::class, 'show'])->name('internships.show');
 
-// 🔐 Routes setelah login
-Route::middleware('auth')->group(function () {
+//Melihat profil user dan pembimbing oleh admin
+Route::get('/profile/user/{id}', [UserController::class, 'showProfile'])->name('user.profile');
+Route::get('/profile/pembimbing/{id}', [PembimbingController::class, 'showProfile'])->name('pembimbing.profile');
+
+//Edit dan lihat profile oleh user
+Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+// Route::get('/profile/{id}', [ProfileController::class, 'index'])->name('profile');
+
+Route::get('/admin/users/{id}', [UserController::class, 'show'])->name('admin.users.show');
+Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
+
+
+// **🔐 Routes setelah login**
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    Route::get('/profile', [AuthController::class, 'profile'])->name('profile.show');
-
-    // ✅ Tambahkan route update foto profil
-    Route::post('/profile/update-picture', [ProfileController::class, 'updateProfilePicture'])->name('profile.update-picture');
 
     Route::get('/tasks/{task}/upload', [TaskController::class, 'uploadForm'])->name('tasks.upload.form');
     Route::put('/tasks/{task}/upload', [TaskController::class, 'uploadFile'])->name('tasks.upload');
 
-    // 👤 Routes untuk User
+    Route::get('/profile', [AuthController::class, 'profile'])->name('profile.show');
+
+    // ✅ Tambahkan route update foto profil
+    Route::post('/profile/update-picture', [ProfileController::class, 'update'])->name('profile.update-picture');
+
+    Route::get('/tasks/{task}/upload', [TaskController::class, 'uploadForm'])->name('tasks.upload.form');
+    Route::put('/tasks/{task}/upload', [TaskController::class, 'uploadFile'])->name('tasks.upload');
+
+    // **👤 Routes untuk User**
     Route::prefix('user')->middleware('role:user')->group(function () {
         Route::get('/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
+
         Route::get('/user/dashboard', [DashboardController::class, 'userDashboard'])->name('user.dashboard');
 
         // 📝 Pendaftaran Program Magang
@@ -75,7 +117,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/uploads', [UploadController::class, 'storeUser'])->name('uploads.storeUser');
     });
 
-    // 🎓 Routes untuk Pembimbing
+    // **🎓 Routes untuk Pembimbing**
     Route::prefix('pembimbing')->middleware('role:pembimbing')->group(function () {
         Route::get('/dashboard', [PembimbingController::class, 'dashboard'])->name('pembimbing.dashboard');
 
@@ -87,6 +129,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/tasks', [TaskController::class, 'index'])->name('pembimbing.tasks.index');
         Route::put('/tasks/{task}/review', [TaskController::class, 'review'])->name('pembimbing.tasks.review');
         Route::resource('tasks', TaskController::class);
+        // Menambah tugas
         Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
 
         // Input Nilai
@@ -98,9 +141,23 @@ Route::middleware('auth')->group(function () {
         // ❌ Manajemen User
         Route::delete('/user/{id}', [UserController::class, 'destroy'])->name('user.destroy');
         Route::get('/user/{id}/edit', [UserController::class, 'edit'])->name('user.edit');
+
+        // Untuk update status lowongan
+        Route::post('/update-status-lowongan', [PembimbingController::class, 'updateStatusLowongan'])->name('update.status.lowongan');
+
+        //Melihat detail peserta
+        // Route::get('/pembimbing/peserta/{user}', [App\Http\Controllers\UserController::class, 'show'])->name('pembimbing.show');
+
+        // Route::resource('users', \App\Http\Controllers\UserController::class, ['as' => 'pembimbing']);
+
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('pembimbing.users.show');
+
+        Route::get('/profile', [ProfileController::class, 'profile'])->name('pembimbing.profile.show');
+
+        Route::post('/pembimbing/tasks/assign', [TaskController::class, 'assignTaskToInternship'])->name('tasks.assign');
     });
 
-    // 🛠️ Routes untuk Admin
+    // **🛠️ Routes untuk Admin**
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         Route::post('/internships', [InternshipController::class, 'store'])->name('admin.internships.store');
@@ -108,7 +165,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/arsip', [ArsipController::class, 'index'])->name('admin.arsip');
 
         Route::resource('internships', InternshipController::class)
-            ->except(['index', 'show'])
+            ->except(['index', 'show']) // ⛔ Hindari route GET /admin/internships/{id}
             ->names([
                 'create' => 'admin.internships.create',
                 'store' => 'admin.internships.store',
@@ -118,13 +175,37 @@ Route::middleware('auth')->group(function () {
             ]);
 
         Route::get('/arsip', [AdminController::class, 'arsip'])->name('admin.arsip');
+
+        //Dashboard admin
         Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
+
+        // Manajemen User (Khusus Admin)
+        Route::resource('users', UserController::class, ['as' => 'admin']);
+
+        //Manajemen Pembimbing (Khusus Admin)
+        Route::resource('mentors', PembimbingController::class, ['as' => 'admin']);
+
+        //Update dan edit data user oleh admin
+        Route::get('users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
+        Route::put('users/{id}', [UserController::class, 'update'])->name('admin.users.update');
+
+        // Route::resource('users', \App\Http\Controllers\UserController::class, ['as' => 'admin']);
+
+        // Route::middleware(['auth', 'role:admin'])->get('/admin/profile', [AdminController::class, 'show'])->name('admin.profile.show');
+
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('admin.users.show');
+
+        Route::get('/messages', [ContactController::class, 'inbox'])->name('admin.messages.inbox');
+
+        Route::delete('/messages/{id}', [ContactController::class, 'destroy'])->name('messages.delete');
+
+        Route::get('/admin/messages/{id}', [ContactController::class, 'show'])->name('admin.messages.show');
     });
 
-    // 📑 Manajemen Tugas untuk Semua Pengguna
+    // **📑 Manajemen Tugas untuk Semua Pengguna**
     Route::resource('tasks', TaskController::class);
 
-    // 👀 Pratinjau Dokumen
+    // **👀 Pratinjau Dokumen (CV, Resume, dan Formulir)**
     Route::get('/preview/{filename}', function ($filename) {
         $path = storage_path("app/public/uploads/{$filename}");
 
@@ -134,6 +215,10 @@ Route::middleware('auth')->group(function () {
 
         return response()->file($path);
     })->name('preview.pdf');
+
+
+    Route::post('/contact/send', [ContactController::class, 'send'])->name('contact.send');
+
 
     Route::get('/tasks/preview/{filename}', function ($filename) {
         $filePath = storage_path("app/public/uploads/{$filename}");

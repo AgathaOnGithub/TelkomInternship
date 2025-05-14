@@ -49,8 +49,16 @@
 
             <div>
                 <label for="nik" class="block font-medium">Nomor Induk Kependudukan (NIK)</label>
-                <input type="text" class="w-full p-2 border rounded" id="nik" name="nik" value="{{ old('nik') }}" required>
+                <input type="text"
+                    class="w-full p-2 border rounded"
+                    id="nik"
+                    name="nik"
+                    value="{{ old('nik') }}"
+                    maxlength="16"
+                    required>
+                <p id="nikError" class="text-red-600 text-sm mt-1 hidden">NIK harus terdiri dari 16 digit angka</p>
             </div>
+
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -120,6 +128,26 @@
             icon.classList.replace("fa-eye-slash", "fa-eye");
         }
     }
+</script>
+
+<script>
+    const nikInput = document.getElementById('nik');
+    const nikError = document.getElementById('nikError');
+
+    nikInput.addEventListener('input', function () {
+        const nik = nikInput.value;
+        const isValid = /^\d{16}$/.test(nik);
+
+        if (nik.length === 0 || isValid) {
+            nikError.classList.add('hidden');
+            nikInput.classList.remove('border-red-500');
+            nikInput.classList.add('border-gray-300');
+        } else {
+            nikError.classList.remove('hidden');
+            nikInput.classList.remove('border-gray-300');
+            nikInput.classList.add('border-red-500');
+        }
+    });
 </script>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">

@@ -1,112 +1,106 @@
 @extends('layouts.app')
 
 @section('content')
+<!-- Daftar Tugas Magang -->
 <div class="container mt-4">
-    <h2 class="text-center mb-4"><i class="fas fa-folder-open"></i> Daftar Tugas</h2>
+    <h2 class="text-center mb-4">Daftar Tugas Magang</h2>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="{{ route('tasks.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Upload Tugas
-        </a>
-    </div>
+    <a href="{{ route('tasks.create') }}" class="btn btn-primary mb-3">
+        ➕ Tambah Tugas
+    </a>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-dark text-white text-center">
-            <h5 class="mb-0">Tugas yang Telah Diupload</h5>
-        </div>
+    <div class="card shadow">
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered text-center align-middle">
-                    <thead class="table-dark">
+            <table class="table table-bordered text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Program Magang</th>
+                        <th>Jumlah Peserta</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($internships as $internship)
                         <tr>
-                            <th>Judul</th>
-                            <th>Deskripsi</th>
-                            <th>File</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($tasks as $task)
-                        @php
-                            $fileUrl = asset('storage/' . $task->file_path);
-                            $ext = pathinfo($task->file_path, PATHINFO_EXTENSION);
-                            $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif']);
-                            $isPdf = $ext === 'pdf';
-                        @endphp
-                        <tr>
-                            <td>{{ $task->title }}</td>
-                            <td>{{ $task->description }}</td>
+                            <td>{{ $internship->name }}</td>
+                            <td>{{ $internship->users->count() }}</td>
                             <td>
-                                @if ($task->file_path)
-                                    @if ($isImage)
-                                        <button class="btn btn-info btn-sm" onclick="showImagePreview('{{ $fileUrl }}')">
-                                            <i class="fas fa-eye"></i> Lihat Gambar
-                                        </button>
-                                    @elseif ($isPdf)
-                                        <button class="btn btn-info btn-sm" onclick="showPdfPreview('{{ url('/preview/pdf?file=' . $task->file_path) }}')">
-                                            <i class="fas fa-eye"></i> Lihat PDF
-                                        </button>
-                                    @else
-                                        <a href="{{ $fileUrl }}" class="btn btn-info btn-sm" download>
-                                            <i class="fas fa-download"></i> Unduh
-                                        </a>
-                                    @endif
-                                @else
-                                    <span class="text-muted">Tidak ada file</span>
-                                @endif
-                            </td>
-                            <td>
-                                <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-warning btn-sm me-1">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus tugas ini?');" style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </button>
-                                </form>
+                                <button onclick="toggleDetail({{ $internship->id }})" class="btn btn-info btn-sm">
+                                    🔍 Lihat
+                                </button>
                             </td>
                         </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
 
-            <!-- Modal Pratinjau -->
-            <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Pratinjau File</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body text-center">
-                            <img id="imagePreview" src="" alt="Preview" class="img-fluid d-none" />
-                            <iframe id="previewFrame" width="100%" height="500px" class="d-none"></iframe>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        <!-- Detail Peserta -->
+                        <tr id="detail-{{ $internship->id }}" class="d-none">
+                            <td colspan="3">
+                                <div class="p-3">
+                                    <h5>Peserta Program: {{ $internship->name }}</h5>
+                                    <table class="table table-sm table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Nama Peserta</th>
+                                                <th>Judul Tugas</th>
+                                                <th>File</th>
+                                                <th>Deadline</th>
+                                                <th>Nilai</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @php $adaPeserta = false; @endphp
+                                            @forelse ($internship->users as $user)
+                                                @if (strcasecmp($user->pivot->status_lowongan, 'diterima') === 0)
+                                                    @php $adaPeserta = true; @endphp
+                                                    @forelse ($user->tasks as $task)
+                                                        <tr>
+                                                            <td>{{ $user->name }}</td>
+                                                            <td>{{ $task->title }}</td>
+                                                            <td>
+                                                                @if ($task->file_path)
+                                                                    <a href="{{ asset('storage/' . $task->file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Lihat</a>
+                                                                @else
+                                                                    <span class="text-muted">Belum ada</span>
+                                                                @endif
+                                                            </td>
+                                                            <td>{{ \Carbon\Carbon::parse($task->deadline)->format('d M Y') }}</td>
+                                                            <td>{{ $task->grade ?? 'Belum Dinilai' }}</td>
+                                                            <td>
+                                                                <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                                                                <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" style="display:inline;">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Yakin?')">Hapus</button>
+                                                                </form>
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr><td colspan="6" class="text-muted">Belum ada tugas</td></tr>
+                                                    @endforelse
+                                                @endif
+                                            @empty
+                                                <tr><td colspan="6" class="text-muted">Belum ada peserta</td></tr>
+                                            @endforelse
 
+                                            @if (!$adaPeserta)
+                                                <tr><td colspan="6" class="text-muted">Belum ada peserta yang diterima</td></tr>
+                                            @endif
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
-    function showPdfPreview(pdfUrl) {
-        let viewerUrl = "/pdfjs/web/viewer.html?file=" + encodeURIComponent(pdfUrl);
-        document.getElementById('previewFrame').src = viewerUrl;
-        document.getElementById('imagePreview').classList.add('d-none');
-        document.getElementById('previewFrame').classList.remove('d-none');
-        new bootstrap.Modal(document.getElementById('previewModal')).show();
-    }
-
-    function showImagePreview(imageUrl) {
-        document.getElementById('imagePreview').src = imageUrl;
-        document.getElementById('previewFrame').classList.add('d-none');
-        document.getElementById('imagePreview').classList.remove('d-none');
-        new bootstrap.Modal(document.getElementById('previewModal')).show();
-    }
+function toggleDetail(id) {
+    const row = document.getElementById(`detail-${id}`);
+    row.classList.toggle('d-none');
+}
 </script>
 @endsection
