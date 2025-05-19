@@ -43,6 +43,17 @@
     .btn-login:hover {
         background-color: #4A66A0;
     }
+    .btn-google {
+        background-color: #ffffff;
+        color: #444;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+    .btn-google:hover {
+        background-color: #f1f1f1;
+    }
     .register-link {
         text-align: center;
         margin-top: 15px;
@@ -71,6 +82,12 @@
             </div>
             <button type="submit" class="btn btn-login w-100">Login</button>
         </form>
+
+        {{-- Google Login --}}
+        <a href="{{ route('auth.google') }}" class="btn btn-google w-100 d-flex align-items-center justify-content-center">
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" style="width:20px; margin-right:10px;">
+            Login with Google
+        </a>
 
         <p class="register-link">Belum punya akun? <a href="{{ route('register') }}" class="text-primary fw-bold">Daftar di sini</a></p>
     </div>
